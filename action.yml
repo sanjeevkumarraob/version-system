@@ -21,13 +21,13 @@ inputs:
     description: Github repo dir
     required: false
   CREATE_RELEASE:
-    description: create a tag and a release from the tag. Takes TRUE or FALSE for inputs
+    description: Create a tag and a release from the tag (true/false)
     required: false
-    default: false
+    default: 'false'
   IS_SNAPSHOT:
-    description: create a snapshot release from the tag. Takes TRUE or FALSE for inputs
+    description: Create a snapshot release from the tag (true/false)
     required: false
-    default: false
+    default: 'false'
 outputs:
   version:
     description: New version for tagging

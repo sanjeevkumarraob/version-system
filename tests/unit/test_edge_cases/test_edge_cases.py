@@ -5,16 +5,18 @@ from get_version import process, get_latest_tag_with_module
 
 @patch("builtins.open", new_callable=mock_open, read_data="1.0.0")
 @patch("get_version.get_tags")
-def test_empty_tag_list(mock_get_tags, mock_file):
+@patch("get_version.set_output")
+def test_empty_tag_list(mock_set_output, mock_get_tags, mock_file):
     # Mock empty tags list
     mock_get_tags.return_value = []
+    mock_set_output.return_value = None
 
-    with pytest.raises(ValueError) as exc_info:
-        get_latest_tag_with_module(
-            module="node",
-            version_file="version.txt"
-        )
-    assert "No tags found" in str(exc_info.value)
+    # Should create a new tag based on version file content instead of raising error
+    result = get_latest_tag_with_module(
+        module="node",
+        version_file="version.txt"
+    )
+    assert result == "node-1.0.0"
 
 
 @pytest.fixture

@@ -37,7 +37,7 @@ if [ ! -f "main.py" ] || [ ! -d "tests" ]; then
 fi
 
 # Check if virtual environment is activated
-if [ -z "$VIRTUAL_ENV" ]; then
+if [ -z "$VIRTUAL_ENV" ] && [ -z "$CI" ] && [ -z "$GITHUB_ACTIONS" ]; then
     print_warning "Virtual environment not detected. Attempting to activate..."
     if [ -f "../venv/bin/activate" ]; then
         source ../venv/bin/activate
@@ -51,7 +51,7 @@ fi
 # Function to run unit tests
 run_unit_tests() {
     print_status "Running unit tests..."
-    python -m pytest tests/unit/ -v
+    python3 -m pytest tests/unit/ -v
     if [ $? -eq 0 ]; then
         print_success "Unit tests passed"
         return 0
@@ -64,7 +64,7 @@ run_unit_tests() {
 # Function to run integration tests
 run_integration_tests() {
     print_status "Running integration tests..."
-    python test_integration.py
+    python3 test_integration.py
     if [ $? -eq 0 ]; then
         print_success "Integration tests passed"
         return 0
@@ -77,7 +77,7 @@ run_integration_tests() {
 # Function to run coverage tests
 run_coverage_tests() {
     print_status "Running tests with coverage..."
-    python -m pytest tests/unit/ --cov=src --cov-report=term-missing --cov-report=html
+    python3 -m pytest tests/unit/ --cov=src --cov-report=term-missing --cov-report=html
     if [ $? -eq 0 ]; then
         print_success "Coverage tests completed"
         print_status "HTML coverage report generated in htmlcov/"
@@ -91,7 +91,7 @@ run_coverage_tests() {
 # Function to generate full report
 generate_report() {
     print_status "Generating comprehensive test report..."
-    python generate_test_report.py
+    python3 generate_test_report.py
     if [ $? -eq 0 ]; then
         print_success "Test report generated"
         return 0

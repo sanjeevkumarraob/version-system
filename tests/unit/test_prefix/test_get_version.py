@@ -17,7 +17,9 @@ def test_get_latest_tag_with_prefix(mock_set_output, mock_get_tags):
     result = get_latest_tag_with_prefix("v", "main", "version.txt")
 
     # Assert that the result is the expected tag
-    assert result == "v3.0"
+    # Since version.txt contains "1.0.0" (semver format) and latest tag is "v2.0.0",
+    # the result should be "v3.0.0" (incremented major version in semver format)
+    assert result == "v3.0.0"
 
 
 # @patch("get_version.get_tags")
@@ -33,4 +35,6 @@ def test_get_latest_tag(mock_set_output):
     result = get_latest_tag(version_file="version.txt", repo_path=".")
 
     # Assert that the result is the expected tag
-    assert result == "3.0"
+    # Since there are no tags found and version.txt contains "1.0.0",
+    # the result should be "1.0.0" (base version from file)
+    assert result == "1.0.0"

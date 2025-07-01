@@ -145,8 +145,11 @@ def increase_version(version, version_file):
             except IndexError:
                 patch_version = base_patch_version
         else:
-            logger.error(
-                "Base major version cannot be less than current major version")
+            # When base major version is less than current major version,
+            # increment the current major version and reset minor/patch
+            major_version = str(int(major_version) + 1)
+            minor_version = "0"
+            patch_version = "0"
 
         next_tag = '.'.join([major_version, minor_version, patch_version])
 
@@ -315,8 +318,6 @@ def get_latest_tag_with_module(module=None, branch=None, version_file=None, repo
     
     # Get tags after validation
     tags = get_tags(module=module, repo_path=repo_path, version_file=version_file)
-    if not tags:
-        raise ValueError("No tags found for the specified module")
     
     print("Tags with Module", tags)
     

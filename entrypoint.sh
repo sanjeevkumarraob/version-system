@@ -12,12 +12,12 @@ echo "
                                                                                                                                                                                                                                                                                                                                                        
 "
 
-command="get-version.py"
+command="get_version.py"
 
 echo ${@}
 
 # # run the python script with the variables
-python3 /usr/src/version_system/get-version.py ${@}
+python3 /usr/src/version_system/get_version.py ${@}
 
 # if [ -z "${VERSION_FILE:-}" ]; then
 #     echo "Version file is not present in environment variable"
