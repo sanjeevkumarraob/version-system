@@ -34,7 +34,10 @@ def test_get_latest_tag(mock_set_output):
     # Call the function with the version file and repo path
     result = get_latest_tag(version_file="version.txt", repo_path=".")
 
+    # Read the expected version from the version file
+    with open("version.txt", "r") as f:
+        expected_version = f.read().strip()
+
     # Assert that the result is the expected tag
-    # Since there are no tags found and version.txt contains "1.0.0",
-    # the result should be "1.0.0" (base version from file)
-    assert result == "1.0.0"
+    # Since there are no tags found, the result should be the base version from file
+    assert result == expected_version
