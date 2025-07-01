@@ -53,18 +53,9 @@ jobs:
           # Run basic tests first
           python3 tests/test_basic.py
 
-      - name: Commit version bump
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          
-          git add version.txt
-          git commit -m "Bump version to ${{ steps.version.outputs.version }}"
-          git push
-
       - name: Create and push tag
         run: |
-          # Create the new version tag
+          # Create the new version tag using our action's output
           git tag -a v${{ steps.version.outputs.version }} -m "Release ${{ steps.version.outputs.version }}"
           git push origin v${{ steps.version.outputs.version }}
           
