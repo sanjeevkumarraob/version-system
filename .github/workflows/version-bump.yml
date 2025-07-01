@@ -41,41 +41,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Update version.txt to desired next version
-        run: |
-          if [ -n "${{ github.event.inputs.custom_version }}" ]; then
-            # Use custom version if provided
-            echo "${{ github.event.inputs.custom_version }}" > version.txt
-            echo "Set version.txt to custom version: ${{ github.event.inputs.custom_version }}"
-          else
-            # Get the latest released version from tags
-            LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
-            LATEST_VERSION=${LATEST_TAG#v}  # Remove 'v' prefix
-            
-            # Parse current version
-            IFS='.' read -ra VERSION_PARTS <<< "$LATEST_VERSION"
-            MAJOR=${VERSION_PARTS[0]:-0}
-            MINOR=${VERSION_PARTS[1]:-0}
-            PATCH=${VERSION_PARTS[2]:-0}
-            
-            # Calculate next version based on bump type
-            case "${{ github.event.inputs.version_type }}" in
-              "major")
-                NEXT_VERSION="$((MAJOR + 1)).0.0"
-                ;;
-              "minor")
-                NEXT_VERSION="${MAJOR}.$((MINOR + 1)).0"
-                ;;
-              "patch")
-                NEXT_VERSION="${MAJOR}.${MINOR}.$((PATCH + 1))"
-                ;;
-            esac
-            
-            echo "$NEXT_VERSION" > version.txt
-            echo "Set version.txt to next ${{ github.event.inputs.version_type }} version: $NEXT_VERSION"
-          fi
-
-      - name: Generate and validate version using our own action
+      - name: Generate next version using our own action
         id: version
         uses: ./
         with:
