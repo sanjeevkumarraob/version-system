@@ -32,6 +32,9 @@ jobs:
         run: |
           # Run basic tests first
           python3 tests/test_basic.py
+          
+          # Run additional tests to ensure everything works
+          python3 -m pytest tests/ -v --tb=short
 
       - name: Extract version info
         id: version
@@ -89,12 +92,12 @@ jobs:
           echo "Generated release notes for ${{ steps.version.outputs.tag_name }}"
 
       - name: Create GitHub Release
-        uses: actions/create-release@v1
+        uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ steps.version.outputs.tag_name }}
-          release_name: Version System ${{ steps.version.outputs.version_number }}
+          name: Version System ${{ steps.version.outputs.version_number }}
           body_path: release_notes.md
           draft: false
           prerelease: ${{ steps.version.outputs.is_prerelease }}
