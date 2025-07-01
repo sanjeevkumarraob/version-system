@@ -45,14 +45,14 @@ def test_empty_version_file(mock_get_tags):
 @patch.dict(os.environ, {'GITHUB_OUTPUT': 'github_output.txt'})
 @patch("get_version.get_tags")
 def test_no_tags_found(mock_get_tags):
-    """Test handling of no tags found"""
+    """Test handling of no tags found - should create new tag from version file"""
     # Setup
     mock_get_tags.return_value = []
     
-    with pytest.raises(ValueError) as exc_info:
-        with patch("builtins.open", mock_open(read_data="1.0.0")):
-            get_latest_tag_with_module(
-                module="test",
-                version_file="version.txt"
-            )
-    assert "No tags found" in str(exc_info.value) 
+    # Should create a new tag instead of raising error
+    with patch("builtins.open", mock_open(read_data="1.0.0")):
+        result = get_latest_tag_with_module(
+            module="test",
+            version_file="version.txt"
+        )
+    assert result == "test-1.0.0" 

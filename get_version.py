@@ -318,8 +318,6 @@ def get_latest_tag_with_module(module=None, branch=None, version_file=None, repo
     
     # Get tags after validation
     tags = get_tags(module=module, repo_path=repo_path, version_file=version_file)
-    if not tags:
-        raise ValueError("No tags found for the specified module")
     
     print("Tags with Module", tags)
     
