@@ -36,8 +36,16 @@ jobs:
           # Run additional tests to ensure everything works
           python3 -m pytest tests/ -v --tb=short
 
-      - name: Extract version info
+      - name: Generate version and create release using our own action
         id: version
+        uses: ./
+        with:
+          VERSION_FILE: "version.txt"
+          GIT_REPO_PATH: "."
+          CREATE_RELEASE: true
+
+      - name: Extract version info for major tag update
+        id: version_info
         run: |
           # Get the tag name (e.g., v1.2.3)
           TAG_NAME=${GITHUB_REF#refs/tags/}
@@ -47,74 +55,32 @@ jobs:
           MAJOR_VERSION=$(echo $TAG_NAME | cut -d. -f1)
           echo "major_version=$MAJOR_VERSION" >> $GITHUB_OUTPUT
           
-          # Extract version without 'v' prefix (e.g., v1.2.3 -> 1.2.3)
-          VERSION_NUMBER=${TAG_NAME#v}
-          echo "version_number=$VERSION_NUMBER" >> $GITHUB_OUTPUT
-          
-          # Check if this is a pre-release (contains alpha, beta, rc)
-          if [[ $TAG_NAME =~ (alpha|beta|rc) ]]; then
-            echo "is_prerelease=true" >> $GITHUB_OUTPUT
-          else
-            echo "is_prerelease=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Generate release notes
-        id: release_notes
-        run: |
-          # Create release notes
-          cat > release_notes.md << 'EOF'
-          ## Version System ${{ steps.version.outputs.version_number }}
-          
-          ### 🚀 Features
-          - Automated semantic versioning for GitHub Actions
-          - Support for prefixes, suffixes, and module-specific versioning
-          - 97% test coverage with comprehensive test suite
-          - GitHub Actions composite action (no Docker required)
-          - Security validations and path traversal protection
-          
-          ### 📦 Usage
-          ```yaml
-          - name: Generate Version
-            uses: sanjeevkumarraob/version-system@${{ steps.version.outputs.major_version }}
-            with:
-              VERSION_FILE: "version.txt"
-              GIT_REPO_PATH: "."
-          ```
-          
-          ### 🔧 What's Changed
-          - See [CHANGELOG.md](https://github.com/sanjeevkumarraob/version-system/blob/main/CHANGELOG.md) for detailed changes
-          
-          ### 📋 Full Documentation
-          - [README.md](https://github.com/sanjeevkumarraob/version-system/blob/main/README.md)
-          - [Contributing Guidelines](https://github.com/sanjeevkumarraob/version-system/blob/main/CONTRIBUTING.md)
-          EOF
-          
-          echo "Generated release notes for ${{ steps.version.outputs.tag_name }}"
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.version.outputs.tag_name }}
-          name: Version System ${{ steps.version.outputs.version_number }}
-          body_path: release_notes.md
-          draft: false
-          prerelease: ${{ steps.version.outputs.is_prerelease }}
+          echo "Tag: $TAG_NAME, Major: $MAJOR_VERSION"
 
       - name: Update major version tag
         run: |
           # Delete existing major version tag if it exists
-          git tag -d ${{ steps.version.outputs.major_version }} 2>/dev/null || true
-          git push origin :refs/tags/${{ steps.version.outputs.major_version }} 2>/dev/null || true
+          git tag -d ${{ steps.version_info.outputs.major_version }} 2>/dev/null || true
+          git push origin :refs/tags/${{ steps.version_info.outputs.major_version }} 2>/dev/null || true
           
           # Create new major version tag pointing to current commit
-          git tag ${{ steps.version.outputs.major_version }}
-          git push origin ${{ steps.version.outputs.major_version }}
+          git tag ${{ steps.version_info.outputs.major_version }}
+          git push origin ${{ steps.version_info.outputs.major_version }}
           
-          echo "✅ Updated major version tag ${{ steps.version.outputs.major_version }} to point to ${{ steps.version.outputs.tag_name }}"
+          echo "✅ Updated major version tag ${{ steps.version_info.outputs.major_version }} to point to ${{ steps.version_info.outputs.tag_name }}"
 
-
+      - name: Display release results
+        run: |
+          echo "## 🎉 Release Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version Created:** ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Previous Version:** ${{ steps.version.outputs.current_version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Major Version Tag:** ${{ steps.version_info.outputs.major_version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Release Created:** ✅ Using our own action!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Usage for Users" >> $GITHUB_STEP_SUMMARY
+          echo '```yaml' >> $GITHUB_STEP_SUMMARY
+          echo "uses: sanjeevkumarraob/version-system@${{ steps.version_info.outputs.major_version }}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
 
   notify:
     needs: release
@@ -125,6 +91,7 @@ jobs:
         run: |
           if [ "${{ needs.release.result }}" == "success" ]; then
             echo "🎉 Release ${{ github.ref_name }} completed successfully!"
+            echo "✅ Used our own version-system action to create the release!"
             echo "Users can now use: sanjeevkumarraob/version-system@${GITHUB_REF#refs/tags/v}"
           else
             echo "❌ Release ${{ github.ref_name }} failed!"
