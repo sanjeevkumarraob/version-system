@@ -209,7 +209,7 @@ This project uses our own version-system action for releases - perfect dogfoodin
 ### CI/CD Workflows
 
 - **CI**: Runs tests on all pull requests and pushes
-- **Version Bump**: Complete release process using our own action
+- **Version Bump**: Complete automated release process using our own action
 
 ## Contributing
 
