@@ -82,7 +82,9 @@ class VersionSystem:
             
             # Apply prefix, suffix, or module to the calculated version
             if prefix:
-                next_version.prefix = prefix
+                # Remove trailing dash from prefix if present
+                clean_prefix = prefix.rstrip('-')
+                next_version.prefix = clean_prefix
             elif suffix:
                 # Remove leading dash from suffix if present
                 clean_suffix = suffix.lstrip('-')
