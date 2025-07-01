@@ -41,25 +41,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Generate next version using our own action
+      - name: Generate version and create release using our own action
         id: version
         uses: ./
         with:
           VERSION_FILE: "version.txt"
           GIT_REPO_PATH: "."
-
-      - name: Run tests
-        run: |
-          # Run basic tests first
-          python3 tests/test_basic.py
-
-      - name: Create and push tag
-        run: |
-          # Create the new version tag using our action's output
-          git tag -a v${{ steps.version.outputs.version }} -m "Release ${{ steps.version.outputs.version }}"
-          git push origin v${{ steps.version.outputs.version }}
-          
-          echo "✅ Created and pushed tag v${{ steps.version.outputs.version }}"
+          CREATE_RELEASE: true
 
       - name: Summary
         run: |
