@@ -183,18 +183,22 @@ GITHUB_OUTPUT=/tmp/output python3 get_version.py -f version.txt -r . -m my-modul
 
 ## Release Process
 
-This project uses automated releases with GitHub Actions:
+This project uses our own version-system action for releases - perfect dogfooding!
 
 ### For Maintainers
 
 1. **Create a new release**: Use the "Version Bump and Tag" workflow in GitHub Actions
    - Go to Actions → Version Bump and Tag → Run workflow
    - Choose version type (patch/minor/major) or specify custom version
-   - The workflow will automatically create tags and trigger releases
+   - Our action automatically handles everything:
+     - ✅ Version calculation based on existing tags
+     - ✅ Tag creation
+     - ✅ Release creation with auto-generated notes
+     - ✅ Major version tag updates (v1, v2, etc.)
 
-2. **Major version tags**: Are automatically updated (v1, v2, etc.)
-   - Users can always use `@v1` to get the latest v1.x.x version
-   - Users can use `@v1.2.3` for specific versions
+2. **version.txt**: Stays stable at `1.0.0` as reference
+   - Never needs manual updates
+   - Used by our action as base reference only
 
 ### Version Strategy
 
@@ -205,8 +209,7 @@ This project uses automated releases with GitHub Actions:
 ### CI/CD Workflows
 
 - **CI**: Runs tests on all pull requests and pushes
-- **Release**: Automatically creates releases when version tags are pushed
-- **Version Bump**: Manual workflow to create new versions
+- **Version Bump**: Complete release process using our own action
 
 ## Contributing
 
