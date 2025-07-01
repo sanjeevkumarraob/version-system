@@ -26,13 +26,13 @@ VERSION_FILE="${GIT_REPO_PATH}/${VERSION_FILE}"
 # Build the command with proper argument handling
 if [ ! -z "${PREFIX:-}" ]; then
     echo "Prefix present in environment variable"
-    cmd="python3 \"$GITHUB_ACTION_PATH/main.py\" --prefix \"${PREFIX}\" -f \"${VERSION_FILE}\" -r \"${GIT_REPO_PATH}\""
+    cmd="python3 \"$GITHUB_ACTION_PATH/main.py\" --prefix=\"${PREFIX}\" -f \"${VERSION_FILE}\" -r \"${GIT_REPO_PATH}\""
 elif [ ! -z "${SUFFIX:-}" ]; then
     echo "Suffix present in environment variable"
-    cmd="python3 \"$GITHUB_ACTION_PATH/main.py\" --suffix \"${SUFFIX}\" -f \"${VERSION_FILE}\" -r \"${GIT_REPO_PATH}\""
+    cmd="python3 \"$GITHUB_ACTION_PATH/main.py\" --suffix=\"${SUFFIX}\" -f \"${VERSION_FILE}\" -r \"${GIT_REPO_PATH}\""
 elif [ ! -z "${MODULE:-}" ]; then
     echo "Module present in environment variable"
-    cmd="python3 \"$GITHUB_ACTION_PATH/main.py\" --module \"${MODULE}\" -f \"${VERSION_FILE}\" -r \"${GIT_REPO_PATH}\""
+    cmd="python3 \"$GITHUB_ACTION_PATH/main.py\" --module=\"${MODULE}\" -f \"${VERSION_FILE}\" -r \"${GIT_REPO_PATH}\""
 else
     echo "Getting a simple semver"
     cmd="python3 \"$GITHUB_ACTION_PATH/main.py\" -f \"${VERSION_FILE}\" -r \"${GIT_REPO_PATH}\""
