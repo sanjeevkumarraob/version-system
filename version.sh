@@ -28,9 +28,10 @@ else
     command="${command} -f ${VERSION_FILE} -r ${GIT_REPO_PATH}"
 fi
 
-if [ ! -z "${IS_SNAPSHOT:-}" ]; then
+# FIXED: Only add -i flag when IS_SNAPSHOT is explicitly "true"
+if [ ! -z "${IS_SNAPSHOT:-}" ] && [ "${IS_SNAPSHOT}" = "true" ]; then
     echo "Getting a snapshot version"
-    command="${command} -i $IS_SNAPSHOT"
+    command="${command} -i"
 fi
 
 if [ ! -z "${BRANCH:-}" ]; then
