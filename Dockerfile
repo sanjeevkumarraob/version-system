@@ -1,4 +1,4 @@
-FROM python:3.12-rc-bullseye
+FROM python:3.12-slim
 
 WORKDIR /usr/src/version_system
 
@@ -12,6 +12,6 @@ COPY . .
 RUN chmod 755 /usr/src/version_system/entrypoint.sh \
     && chmod -R 755 /usr/src/version_system/ \
     && chmod 755 /usr/src/version_system/version.sh \
-    && chmod 755 /usr/src/version_system/get-version.py
+    && chmod 755 /usr/src/version_system/get_version.py
 
 ENTRYPOINT [ "/usr/src/version_system/entrypoint.sh" ]
