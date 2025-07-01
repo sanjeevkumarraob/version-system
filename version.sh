@@ -2,7 +2,7 @@
 set -eu
 
 # Updated to use the new improved main.py instead of get_version.py
-command="main.py"
+command_args=("main.py")
 
 if [ -z "${VERSION_FILE:-}" ]; then
     echo "Version file is not present in environment variable"
@@ -13,33 +13,33 @@ elif [ -z "${GIT_REPO_PATH:-}" ]; then
 elif [ ! -z "${PREFIX:-}" ]; then
     echo "Prefix present in environment variable"
     VERSION_FILE="${GIT_REPO_PATH}/${VERSION_FILE}"
-    command="${command} -p \"${PREFIX}\" -f \"${VERSION_FILE}\" -r \"${GIT_REPO_PATH}\""
+    command_args+=("-p" "${PREFIX}" "-f" "${VERSION_FILE}" "-r" "${GIT_REPO_PATH}")
 elif [ ! -z "${SUFFIX:-}" ]; then
     echo "Suffix present in environment variable"
     VERSION_FILE="${GIT_REPO_PATH}/${VERSION_FILE}"
-    command="${command} -s \"${SUFFIX}\" -f \"${VERSION_FILE}\" -r \"${GIT_REPO_PATH}\""
+    command_args+=("-s" "${SUFFIX}" "-f" "${VERSION_FILE}" "-r" "${GIT_REPO_PATH}")
 elif [ ! -z "${MODULE:-}" ]; then
     echo "Module present in environment variable"
     VERSION_FILE="${GIT_REPO_PATH}/${VERSION_FILE}"
-    command="${command} -m \"${MODULE}\" -f \"${VERSION_FILE}\" -r \"${GIT_REPO_PATH}\""
+    command_args+=("-m" "${MODULE}" "-f" "${VERSION_FILE}" "-r" "${GIT_REPO_PATH}")
 else
     echo "Getting a simple semver"
     VERSION_FILE="${GIT_REPO_PATH}/${VERSION_FILE}"
-    command="${command} -f \"${VERSION_FILE}\" -r \"${GIT_REPO_PATH}\""
+    command_args+=("-f" "${VERSION_FILE}" "-r" "${GIT_REPO_PATH}")
 fi
 
 # FIXED: Only add -i flag when IS_SNAPSHOT is explicitly "true"
 if [ ! -z "${IS_SNAPSHOT:-}" ] && [ "${IS_SNAPSHOT}" = "true" ]; then
     echo "Getting a snapshot version"
-    command="${command} -i"
+    command_args+=("-i")
 fi
 
 if [ ! -z "${BRANCH:-}" ]; then
   echo "Branch present in environment variable"
-  command="${command} -b \"${BRANCH}\""
+  command_args+=("-b" "${BRANCH}")
 fi
 
-echo $command
+echo "Command: ${command_args[@]}"
 
 # Add git repo to safe directory list
 git config --global --add safe.directory "${GIT_REPO_PATH}"
@@ -51,4 +51,4 @@ if [ -f "$GITHUB_ACTION_PATH/requirements.txt" ]; then
 fi
 
 # Run the improved Python script with the variables
-eval "python3 $GITHUB_ACTION_PATH/$command"
+python3 "$GITHUB_ACTION_PATH/${command_args[@]}"
