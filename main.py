@@ -80,6 +80,16 @@ class VersionSystem:
                 current_version, base_version
             )
             
+            # Apply prefix, suffix, or module to the calculated version
+            if prefix:
+                next_version.prefix = prefix
+            elif suffix:
+                # Remove leading dash from suffix if present
+                clean_suffix = suffix.lstrip('-')
+                next_version.suffix = clean_suffix
+            elif module:
+                next_version.module = module
+            
             # Handle snapshot versions
             if is_snapshot:
                 next_version = self.version_calculator.create_snapshot_version(
