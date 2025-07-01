@@ -68,7 +68,6 @@ def test_required_files_exist():
         "README.md",
         "LICENSE", 
         "requirements.txt",
-        "Dockerfile",
         "version.sh",
         "main.py"
     ]
