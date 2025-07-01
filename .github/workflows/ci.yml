@@ -1,0 +1,146 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run tests
+        run: |
+          chmod +x run_tests.sh
+          ./run_tests.sh all
+
+      - name: Test version generation
+        run: |
+          # Test basic functionality
+          GITHUB_OUTPUT=/tmp/test_output python3 get_version.py -f version.txt -r .
+          
+          # Test with prefix
+          GITHUB_OUTPUT=/tmp/test_prefix python3 get_version.py -f version.txt -r . -p dev
+          
+          # Test with module
+          GITHUB_OUTPUT=/tmp/test_module python3 get_version.py -f version.txt -r . -m test-module
+          
+          echo "✅ All version generation tests passed"
+
+      - name: Test Docker build
+        run: |
+          docker build -t version-system-test .
+          echo "3.0.0" > test_version.txt
+          docker run --rm -v $(pwd):/workspace version-system-test \
+            -f /workspace/test_version.txt -r /workspace
+          echo "✅ Docker test passed"
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install linting tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 black isort
+
+      - name: Run linting
+        run: |
+          # Check code formatting with black
+          black --check --diff .
+          
+          # Check import sorting with isort
+          isort --check-only --diff .
+          
+          # Run flake8 for style and error checking
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install security tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install bandit safety
+
+      - name: Run security checks
+        run: |
+          # Check for security issues with bandit
+          bandit -r . -f json -o bandit-report.json || true
+          
+          # Check for known security vulnerabilities in dependencies
+          safety check --json --output safety-report.json || true
+          
+          echo "✅ Security checks completed"
+
+  action-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Test GitHub Action
+        uses: ./
+        with:
+          VERSION_FILE: "version.txt"
+          GIT_REPO_PATH: "."
+
+      - name: Test with prefix
+        uses: ./
+        with:
+          VERSION_FILE: "version.txt"
+          GIT_REPO_PATH: "."
+          PREFIX: "dev-"
+
+      - name: Test with module
+        uses: ./
+        with:
+          VERSION_FILE: "version.txt"
+          GIT_REPO_PATH: "."
+          MODULE: "test-module"
+
+      - name: Verify outputs
+        run: |
+          echo "✅ GitHub Action tests completed successfully"

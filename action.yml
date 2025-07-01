@@ -1,0 +1,90 @@
+name: Version System
+description: Version management system for automated semantic versioning and tagging
+inputs:
+  PREFIX:
+    required: false
+    description: Prefix for the tag eg., dev-1.0.0'
+  BRANCH:
+    required: false
+    description: Provide the branch to look for the tags/tag a specific branch
+  VERSION_FILE:
+    required: false
+    description: Provide the version file for base tag
+    default: "version.txt"
+  SUFFIX:
+    description: Suffix for the tag eg., 1.0.0-beta
+    required: false
+  MODULE:
+    description: Module name for the tag eg., api-gateway-1.0.0
+    required: false
+  GIT_REPO_PATH:
+    description: Github repo dir
+    required: false
+  CREATE_RELEASE:
+    description: create a tag and a release from the tag. Takes TRUE or FALSE for inputs
+    required: false
+    default: false
+  IS_SNAPSHOT:
+    description: create a snapshot release from the tag. Takes TRUE or FALSE for inputs
+    required: false
+    default: false
+outputs:
+  version:
+    description: New version for tagging
+    value: ${{ steps.generate-version.outputs.next_tag }}
+  current_version:
+    description: Latest available version
+    value: ${{ steps.generate-version.outputs.current_tag }}
+    
+runs:
+  using: 'composite'
+  steps:
+    - name: Get New Tag
+      shell: bash
+      id: generate-version
+      run: |
+        export PYTHONDONTWRITEBYTECODE=1
+        export PREFIX=${{inputs.PREFIX}}
+        export BRANCH=${{inputs.BRANCH}}
+        export VERSION_FILE=${{inputs.VERSION_FILE}}
+        export SUFFIX=${{inputs.SUFFIX}}
+        export MODULE=${{inputs.MODULE}}
+        export IS_SNAPSHOT=${{inputs.IS_SNAPSHOT}}
+        export GIT_REPO_PATH=$GITHUB_WORKSPACE
+        echo $GITHUB_WORKSPACE
+        echo ${{ github.workspace }}
+        echo "Are we creating release along the tag? - ${{inputs.CREATE_RELEASE}}"
+        sh ${GITHUB_ACTION_PATH}/version.sh
+
+    - name: "Create Tag"
+      if: ${{ inputs.CREATE_RELEASE == 'true' }}
+      uses: actions/github-script@v6.4.1
+      with:
+        script: |
+          github.rest.git.createRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: `refs/tags/${{steps.generate-version.outputs.next_tag}}`,
+                sha: context.sha
+          })
+    - name: "Create release"
+      if: ${{ inputs.CREATE_RELEASE == 'true' }}
+      uses: "actions/github-script@v6.4.1"
+      with:
+          script: |
+            try {
+              const response = await github.rest.repos.createRelease({
+                draft: false,
+                generate_release_notes: true,
+                name: "Release ${{steps.generate-version.outputs.next_tag}}",
+                owner: context.repo.owner,
+                prerelease: false,
+                repo: context.repo.repo,
+                tag_name: "${{steps.generate-version.outputs.next_tag}}",
+              });
+              core.exportVariable('RELEASE_ID', response.data.id);
+              core.exportVariable('RELEASE_UPLOAD_URL', response.data.upload_url);
+            } catch (error) {
+              core.setFailed(error.message);
+            }
+
