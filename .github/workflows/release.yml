@@ -66,7 +66,7 @@ jobs:
           - Automated semantic versioning for GitHub Actions
           - Support for prefixes, suffixes, and module-specific versioning
           - 97% test coverage with comprehensive test suite
-          - Docker support for containerized environments
+          - GitHub Actions composite action (no Docker required)
           - Security validations and path traversal protection
           
           ### 📦 Usage
@@ -111,19 +111,7 @@ jobs:
           
           echo "✅ Updated major version tag ${{ steps.version.outputs.major_version }} to point to ${{ steps.version.outputs.tag_name }}"
 
-      - name: Build and test Docker image
-        run: |
-          # Build Docker image
-          docker build -t version-system:${{ steps.version.outputs.version_number }} .
-          docker build -t version-system:${{ steps.version.outputs.major_version }} .
-          docker build -t version-system:latest .
-          
-          # Test Docker image
-          echo "3.0.0" > test_version.txt
-          docker run --rm -v $(pwd):/workspace version-system:latest \
-            -f /workspace/test_version.txt -r /workspace
-          
-          echo "✅ Docker image built and tested successfully"
+
 
   notify:
     needs: release

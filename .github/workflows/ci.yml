@@ -56,13 +56,7 @@ jobs:
           
           echo "✅ All tests passed"
 
-      - name: Test Docker build
-        run: |
-          docker build -t version-system-test .
-          echo "3.0.0" > test_version.txt
-          docker run --rm -v $(pwd):/workspace version-system-test \
-            -f /workspace/test_version.txt -r /workspace
-          echo "✅ Docker test passed"
+
 
   lint:
     runs-on: ubuntu-latest
