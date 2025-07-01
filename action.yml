@@ -1,5 +1,8 @@
 name: Version System
 description: Version management system for automated semantic versioning and tagging
+branding:
+  icon: 'tag'
+  color: 'blue'
 inputs:
   PREFIX:
     required: false
