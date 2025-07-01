@@ -66,18 +66,19 @@ jobs:
           # Extract major version (e.g., 1.2.3 -> 1)
           MAJOR_VERSION=$(echo ${{ steps.version.outputs.version }} | cut -d. -f1)
           MAJOR_TAG="v${MAJOR_VERSION}"
+          VERSION_TAG="${{ steps.version.outputs.version }}"
           
-          echo "Updating major version tag: $MAJOR_TAG"
+          echo "Updating major version tag: $MAJOR_TAG to point to tag: $VERSION_TAG"
           
           # Delete existing major version tag if it exists
           git tag -d $MAJOR_TAG 2>/dev/null || true
           git push origin :refs/tags/$MAJOR_TAG 2>/dev/null || true
           
-          # Create new major version tag pointing to the new release tag
-          git tag $MAJOR_TAG ${{ steps.version.outputs.version }}
+          # Create new major version tag pointing to the same commit as the version tag
+          git tag $MAJOR_TAG $VERSION_TAG
           git push origin $MAJOR_TAG
           
-          echo "✅ Updated major version tag $MAJOR_TAG to point to ${{ steps.version.outputs.version }}"
+          echo "✅ Updated major version tag $MAJOR_TAG to point to $VERSION_TAG"
 
       - name: Summary
         run: |
