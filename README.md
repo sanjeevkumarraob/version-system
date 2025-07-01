@@ -183,7 +183,7 @@ GITHUB_OUTPUT=/tmp/output python3 get_version.py -f version.txt -r . -m my-modul
 
 ## Release Process
 
-This project uses our own version-system action for releases - perfect dogfooding and automation!
+This project uses our own version-system action for releases - perfect dogfooding and full automation!
 
 ### For Maintainers
 
