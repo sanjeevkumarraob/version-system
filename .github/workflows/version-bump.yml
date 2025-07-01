@@ -1,6 +1,7 @@
 name: Version Bump and Tag
 
 on:
+  # Manual trigger
   workflow_dispatch:
     inputs:
       version_type:
@@ -16,6 +17,13 @@ on:
         description: 'Custom version (optional, overrides version_type)'
         required: false
         type: string
+  
+  # Automatic trigger on main branch pushes (but not for version bump commits)
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '.github/workflows/**'  # Ignore workflow changes to prevent loops
 
 permissions:
   contents: write
@@ -24,6 +32,10 @@ permissions:
 jobs:
   version-bump:
     runs-on: ubuntu-latest
+    # Skip if this is a workflow file change or if commit message contains [skip-release]
+    if: |
+      !contains(github.event.head_commit.message, '[skip-release]') &&
+      !contains(github.event.head_commit.message, 'Update major version tag')
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -49,17 +61,38 @@ jobs:
           GIT_REPO_PATH: "."
           CREATE_RELEASE: true
 
+      - name: Update major version tag
+        run: |
+          # Extract major version (e.g., 1.2.3 -> 1)
+          MAJOR_VERSION=$(echo ${{ steps.version.outputs.version }} | cut -d. -f1)
+          MAJOR_TAG="v${MAJOR_VERSION}"
+          
+          echo "Updating major version tag: $MAJOR_TAG"
+          
+          # Delete existing major version tag if it exists
+          git tag -d $MAJOR_TAG 2>/dev/null || true
+          git push origin :refs/tags/$MAJOR_TAG 2>/dev/null || true
+          
+          # Create new major version tag pointing to the new release tag
+          git tag $MAJOR_TAG ${{ steps.version.outputs.version }}
+          git push origin $MAJOR_TAG
+          
+          echo "✅ Updated major version tag $MAJOR_TAG to point to ${{ steps.version.outputs.version }}"
+
       - name: Summary
         run: |
           echo "## Version Bump Summary" >> $GITHUB_STEP_SUMMARY
           echo "- **Previous Version:** ${{ steps.version.outputs.current_version }}" >> $GITHUB_STEP_SUMMARY
           echo "- **New Version:** ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Tag Created:** v${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "🚀 **Release workflow will now trigger automatically!**" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Users will be able to use:" >> $GITHUB_STEP_SUMMARY
-          echo '```yaml' >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag Created:** ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          
           MAJOR_VERSION=$(echo ${{ steps.version.outputs.version }} | cut -d. -f1)
-          echo "uses: sanjeevkumarraob/version-system@v$MAJOR_VERSION" >> $GITHUB_STEP_SUMMARY
+          echo "- **Major Tag Updated:** v$MAJOR_VERSION" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🚀 **Release created successfully!**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Usage for Users" >> $GITHUB_STEP_SUMMARY
+          echo '```yaml' >> $GITHUB_STEP_SUMMARY
+          echo "uses: sanjeevkumarraob/version-system@v$MAJOR_VERSION  # Latest v$MAJOR_VERSION.x.x" >> $GITHUB_STEP_SUMMARY
+          echo "uses: sanjeevkumarraob/version-system@${{ steps.version.outputs.version }}      # Specific version" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
