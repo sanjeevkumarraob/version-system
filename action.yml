@@ -76,14 +76,21 @@ runs:
       with:
           script: |
             try {
+              const suffix = '${{ inputs.SUFFIX }}';
+              const isPrerelease = suffix !== '';
+              const tagName = '${{steps.generate-version.outputs.next_tag}}';
+              const releaseName = isPrerelease
+                ? `Pre-release ${tagName}`
+                : `Release ${tagName}`;
+
               const response = await github.rest.repos.createRelease({
                 draft: false,
                 generate_release_notes: true,
-                name: "Release ${{steps.generate-version.outputs.next_tag}}",
+                name: releaseName,
                 owner: context.repo.owner,
-                prerelease: false,
+                prerelease: isPrerelease,
                 repo: context.repo.repo,
-                tag_name: "${{steps.generate-version.outputs.next_tag}}",
+                tag_name: tagName,
               });
               core.exportVariable('RELEASE_ID', response.data.id);
               core.exportVariable('RELEASE_UPLOAD_URL', response.data.upload_url);

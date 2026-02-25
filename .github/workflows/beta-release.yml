@@ -1,0 +1,99 @@
+name: Beta Release
+
+# Trigger: Manual dispatch or push to feature branches
+on:
+  workflow_dispatch:
+    inputs:
+      suffix:
+        description: 'Version suffix (default: beta)'
+        required: false
+        default: 'beta'
+  push:
+    branches:
+      - 'feature/**'
+      - 'feat/**'
+      - 'claude/**'
+    paths-ignore:
+      - '*.md'
+      - 'docs/**'
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        python-version: ['3.11', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run tests
+        run: |
+          python3 tests/test_basic.py
+          if python3 -c "import pytest" 2>/dev/null; then
+            python3 -m pytest tests/unit/ -v
+          fi
+
+  beta-release:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Generate beta suffix
+        id: suffix
+        run: |
+          # Use input suffix or default to beta
+          BASE_SUFFIX="${{ github.event.inputs.suffix || 'beta' }}"
+
+          # Add branch hash for uniqueness
+          BRANCH_HASH=$(echo "${{ github.ref_name }}" | md5sum | cut -c1-6)
+
+          echo "value=${BASE_SUFFIX}.${BRANCH_HASH}" >> $GITHUB_OUTPUT
+
+      - name: Get Version (with beta suffix)
+        id: version
+        uses: ./
+        with:
+          VERSION_FILE: 'version.txt'
+          SUFFIX: ${{ steps.suffix.outputs.value }}
+          CREATE_RELEASE: true
+
+      - name: Summary
+        run: |
+          echo "## Beta Release Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Beta Version:** ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Current Version:** ${{ steps.version.outputs.current_version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Usage" >> $GITHUB_STEP_SUMMARY
+          echo '```yaml' >> $GITHUB_STEP_SUMMARY
+          echo "uses: sanjeevkumarraob/version-system@${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY

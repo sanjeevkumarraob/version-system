@@ -151,6 +151,28 @@ with:
   CREATE_RELEASE: true
 ```
 
+### Beta/pre-release from feature branches
+
+When `SUFFIX` is provided with `CREATE_RELEASE: true`, the release is automatically marked as a **prerelease** in GitHub.
+
+```yaml
+- name: Generate beta suffix
+  id: suffix
+  run: |
+    BRANCH_HASH=$(echo "${{ github.ref_name }}" | md5sum | cut -c1-6)
+    echo "value=beta.${BRANCH_HASH}" >> $GITHUB_OUTPUT
+
+- name: Get Version (with beta suffix)
+  id: version
+  uses: sanjeevkumarraob/version-system@v1
+  with:
+    VERSION_FILE: 'version.txt'
+    SUFFIX: ${{ steps.suffix.outputs.value }}
+    CREATE_RELEASE: true
+```
+
+This produces versions like `1.0.10-beta.a1b2c3` and creates a GitHub prerelease.
+
 ## Local Development
 
 ### Running Tests
@@ -210,6 +232,8 @@ This project uses our own version-system action for releases - perfect dogfoodin
 
 - **CI**: Runs tests on all pull requests and pushes
 - **Version Bump**: Complete automated release process using our own action
+- **Beta Release**: Publishes pre-release versions from feature branches (`feature/**`, `feat/**`, `claude/**`)
+- **PR Beta Comment**: Automatically comments on PRs when a beta release is published
 
 ## Contributing
 
